@@ -8,6 +8,8 @@
 
 ### Forma de ejecutar: ./ls (muestra un output similar a ls -al)
 
+#### Aclaraciones: En la carpeta desafio_ls se han agregado algunos archivos de prueba para ver si funciona bien el programa.
+
 ## cp (3pts): implementar el comando copy de forma eficiente, haciendo uso de mmap tal y como se describe en la sección cp1 de uno de los labs anteriores. Solo se pide soportar el caso básico de copiar un archivo regular a otro (i.e. cp src dst donde src es un archivo regular y dst no existe). Si el archivo destino existe, debe fallar; y si el archivo fuente no existe también. Ayuda: mmap(2) y memcpy(3). Se recomienda implementar primero una versión simplificada con write y read; y luego optimizarlo con mmap.
 
 ### Forma de ejecutar: ./cp fuente.txt destino.txt (si el archivo destino existe falla)
