@@ -17,8 +17,6 @@ typedef struct
     char permissions[10];
     char owner_name[32];
     char group_name[32];
-    off_t file_size;
-    time_t mod_time;
     char name[256];
 } EntryInfo;
 
@@ -86,10 +84,15 @@ void print_symbolic_link(char type, const char *path)
 
 void print_entry_info(const EntryInfo *entry)
 {
-    char time_str[80];
-    strftime(time_str, sizeof(time_str), "%b %e %H:%M", localtime(&entry->mod_time));
-
-    printf("%c%s %s %s %9jd %s %s", entry->type, entry->permissions, entry->owner_name, entry->group_name, (intmax_t)entry->file_size, time_str, entry->name);
+    // Obtener el UID del propietario del archivo
+    struct stat entry_stat;
+    if (lstat(entry->name, &entry_stat) == -1)
+    {
+        printf("Error al obtener información de entrada: %s\n", entry->name);
+        return;
+    }
+    uid_t owner_uid = entry_stat.st_uid;
+    printf("%c%s %s uid: %u %s %s", entry->type, entry->permissions, entry->owner_name, owner_uid, entry->group_name, entry->name);
     print_symbolic_link(entry->type, entry->name);
     printf("\n");
 }
@@ -113,7 +116,6 @@ int main(int argc, char *argv[])
     struct dirent *entry;
     EntryInfo entries[1000];
     int entry_count = 0;
-    off_t total_size = 0;
 
     while ((entry = readdir(dir)) != NULL)
     {
@@ -131,19 +133,14 @@ int main(int argc, char *argv[])
         set_file_type(&current_entry->type, entry_stat);
         set_permissions(current_entry->permissions, entry_stat);
         set_user_and_group(entry_stat, current_entry->owner_name, current_entry->group_name);
-        current_entry->file_size = entry_stat.st_size;
-        current_entry->mod_time = entry_stat.st_mtime;
         strncpy(current_entry->name, entry->d_name, sizeof(current_entry->name));
 
         entry_count++;
-        total_size += entry_stat.st_blocks;
     }
 
     closedir(dir);
-
+    // Ordenar las entradas por nombre
     qsort(entries, entry_count, sizeof(EntryInfo), compare_entries);
-
-    printf("total %lld\n", (long long)(total_size / 2));
 
     for (int i = 0; i < entry_count; i++)
     {
